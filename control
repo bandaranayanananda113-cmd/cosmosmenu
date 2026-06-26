@@ -1,0 +1,7 @@
+Package: com.cosmos.keyauth
+Name: cosmosdemo
+Depends: mobilesubstrate
+Version: 1.0
+Architecture: iphoneos-arm
+Description: KeyAuth Menu for iOS
+Author: Chamika
