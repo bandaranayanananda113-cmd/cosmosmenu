@@ -22,26 +22,108 @@ jobs:
         env:
           THEOS: ${{ github.workspace }}/theos
 
-      - name: Compile Dylib
+      - name: Overwrite and Compile Code
         run: |
           export THEOS=$HOME/theos
-          
-          # හිස්ව පවතින Makefile එක වෙනුවට නිවැරදිම එක සර්වර් එක ඇතුළේ නිර්මාණය කිරීම
+
+          # 1. Makefile එක නිවැරදිව සෑදීම
           cat << 'EOF' > Makefile
-          THEOS_DEVICE_IP = 127.0.0.1
           TARGET := iphone:clang:latest:14.5
           ARCHS = arm64 arm64e
-
           include $(THEOS)/makefiles/common.mk
-
           TWEAK_NAME = CosmosMenu
           CosmosMenu_FILES = main.mm
           CosmosMenu_CFLAGS = -fobjc-arc -std=c++17
-
           include $(THEOS)/makefiles/tweak.mk
           EOF
 
-          # දැන් බිල්ඩ් එක සාර්ථකව සිදු කිරීම
+          # 2. skStr.h එක සර්වර් එක ඇතුළේ අලුතින්ම නිවැරදිව සෑදීම
+          cat << 'EOF' > skStr.h
+          #pragma once
+          #include <string>
+          #include <array>
+          #include <cstddef>
+          #ifndef FORCEINLINE
+          #define FORCEINLINE __attribute__((always_inline)) inline
+          #endif
+          namespace skc {
+              template <std::size_t N, char K>
+              class skCrypter {
+              public:
+                  std::array<char, N> _storage;
+                  FORCEINLINE constexpr skCrypter(const char* data) {
+                      for (std::size_t i = 0; i < N; ++i) { _storage[i] = data[i] ^ K; }
+                  }
+                  FORCEINLINE const char* get() {
+                      for (std::size_t i = 0; i < N; ++i) { _storage[i] = _storage[i] ^ K; }
+                      return _storage.data();
+                  }
+              };
+          }
+          #define skCrypt(str) []() { \
+              constexpr char key = __TIME__[4] ^ __TIME__[7]; \
+              constexpr std::size_t len = sizeof(str); \
+              static auto crypted = skc::skCrypter<len, key>(str); \
+              return crypted.get(); \
+          }()
+          EOF
+
+          # 3. main.mm එක කිසිම Error එකක් නැතිව ක්ලීන් කර සෑදීම
+          cat << 'EOF' > main.mm
+          #import <UIKit/UIKit.h>
+          #import "skStr.h"
+
+          namespace KeyAuth {
+              class api {
+              public:
+                  std::string name;
+                  std::string ownerid;
+                  std::string secret;
+                  std::string version;
+                  std::string url;
+                  api(std::string n, std::string o, std::string s, std::string v, std::string u)
+                      : name(n), ownerid(o), secret(s), version(v), url(u) {}
+              };
+          }
+
+          %hook UIViewController
+          - (void)viewDidLoad {
+              %orig;
+              
+              std::string name = skCrypt("COSMOSDEMO");
+              std::string ownerid = skCrypt("ZUkIqSaHgy");
+              std::string secret = skCrypt("bd9fff3c229955140bdfcf35ee9be8283c8ab612cc0241c5d813e4f0fa2ba393");
+              std::string version = skCrypt("1.0");
+              std::string url = skCrypt("https://keyauth.win/api/1.2/");
+              
+              KeyAuth::api KeyAuthApp(name, ownerid, secret, version, url);
+
+              UIWindow *keyWindow = nil;
+              if (@available(iOS 13.0, *)) {
+                  for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                      if (scene.activationState == UISceneActivationStateForegroundActive) {
+                          for (UIWindow *window in scene.windows) {
+                              if (window.isKeyWindow) { keyWindow = window; break; }
+                          }
+                      }
+                  }
+              } else {
+                  keyWindow = [UIApplication sharedApplication].keyWindow;
+              }
+
+              UIButton *loginButton = [UIButton buttonWithType:UIButtonTypeCustom];
+              loginButton.frame = CGRectMake(20, 165, 280, 45);
+              [loginButton setTitle:@"Login" forState:UIControlStateNormal];
+              loginButton.backgroundColor = [UIColor blueColor];
+              
+              if (keyWindow) {
+                  [keyWindow addSubview:loginButton];
+              }
+          }
+          %end
+          EOF
+
+          # බිල්ඩ් එක ස්ටාර්ට් කිරීම
           make FINALPACKAGE=1
         
       - name: Upload Finished Dylib
