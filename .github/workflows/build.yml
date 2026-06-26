@@ -25,9 +25,24 @@ jobs:
       - name: Compile Dylib
         run: |
           export THEOS=$HOME/theos
-          # වත්මන් ෆෝල්ඩරයේ තියෙන ෆයිල් මොනවාදැයි බලා නිවැරදිවම ලැයිස්තුගත කර Compile කිරීම
-          ls -la
-          make -f Makefile FINALPACKAGE=1
+          
+          # හිස්ව පවතින Makefile එක වෙනුවට නිවැරදිම එක සර්වර් එක ඇතුළේ නිර්මාණය කිරීම
+          cat << 'EOF' > Makefile
+          THEOS_DEVICE_IP = 127.0.0.1
+          TARGET := iphone:clang:latest:14.5
+          ARCHS = arm64 arm64e
+
+          include $(THEOS)/makefiles/common.mk
+
+          TWEAK_NAME = CosmosMenu
+          CosmosMenu_FILES = main.mm
+          CosmosMenu_CFLAGS = -fobjc-arc -std=c++17
+
+          include $(THEOS)/makefiles/tweak.mk
+          EOF
+
+          # දැන් බිල්ඩ් එක සාර්ථකව සිදු කිරීම
+          make FINALPACKAGE=1
         
       - name: Upload Finished Dylib
         uses: actions/upload-artifact@v4
