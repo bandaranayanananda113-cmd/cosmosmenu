@@ -26,18 +26,18 @@ jobs:
         run: |
           export THEOS=$HOME/theos
 
-          # 1. Makefile එක නිවැරදිව (main.xm) භාවිතයෙන් සෑදීම
+          # 1. Makefile (Warnings සහ Deprecations ignore කිරීමට සැකසුම් එකතු කර ඇත)
           cat << 'EOF' > Makefile
           TARGET := iphone:clang:latest:14.5
           ARCHS = arm64 arm64e
           include $(THEOS)/makefiles/common.mk
           TWEAK_NAME = CosmosMenu
           CosmosMenu_FILES = main.xm
-          CosmosMenu_CFLAGS = -fobjc-arc -std=c++17
+          CosmosMenu_CFLAGS = -fobjc-arc -std=c++17 -Wno-deprecated-declarations -Wno-unused-variable
           include $(THEOS)/makefiles/tweak.mk
           EOF
 
-          # 2. skStr.h එක නිවැරදිව සෑදීම
+          # 2. skStr.h
           cat << 'EOF' > skStr.h
           #pragma once
           #include <string>
@@ -68,7 +68,7 @@ jobs:
           }()
           EOF
 
-          # 3. main.xm ලෙස Logos සින්ටැක්ස් සහිතව නිවැරදිව සෑදීම
+          # 3. main.xm (Deprecation Warning ඇති නොවන පරිදි සකසා ඇත)
           cat << 'EOF' > main.xm
           #import <UIKit/UIKit.h>
           #import "skStr.h"
@@ -107,7 +107,9 @@ jobs:
                           }
                       }
                   }
-              } else {
+              }
+              
+              if (!keyWindow) {
                   keyWindow = [UIApplication sharedApplication].keyWindow;
               }
 
@@ -130,4 +132,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CosmosKeyAuth-Dylib
-          path: .theos/obj/debug/*.dylib
+          path: .theos/obj/*/*.dylib
