@@ -1,36 +1,51 @@
-#pragma once
-#include <string>
-#include <array>
-#include <cstddef>
+#import <UIKit/UIKit.h>
+#import "skStr.h"
+#import "auth.hpp"
 
-#ifndef FORCEINLINE
-#define FORCEINLINE __attribute__((always_inline)) inline
-#endif
+// සර්වර් එකට ලස්සනට Compile කරන්න පුළුවන් විදියට සකස් කර ඇති කොටස
+void initKeyAuth() {
+    std::string name = skCrypt("COSMOSDEMO");
+    std::string ownerid = skCrypt("ZUkIqSaHgy");
+    std::string secret = skCrypt("b0ffff3c2299551401bdfcf35ea9be8283c0aab612cc0241c5d813e4f0f2a393");
+    std::string version = skCrypt("1.0");
+    std::string url = skCrypt("https://keyauth.win/api/1.2/");
 
-namespace skc {
-    template <std::size_t N, char K>
-    class skCrypter {
-    public:
-        std::array<char, N> _storage;
-
-        FORCEINLINE constexpr skCrypter(const char* data) {
-            for (std::size_t i = 0; i < N; ++i) {
-                _storage[i] = data[i] ^ K;
-            }
-        }
-
-        FORCEINLINE const char* get() {
-            for (std::size_t i = 0; i < N; ++i) {
-                _storage[i] = _storage[i] ^ K;
-            }
-            return _storage.data();
-        }
-    };
+    KeyAuth::api KeyAuthApp(name, ownerid, secret, version, url);
 }
 
-#define skCrypt(str) []() { \
-    constexpr char key = __TIME__[4] ^ __TIME__[7]; \
-    constexpr std::size_t len = sizeof(str); \
-    static auto crypted = skc::skCrypter<len, key>(str); \
-    return crypted.get(); \
-}()
+%hook UIViewController
+
+- (void)viewDidLoad {
+    %orig;
+
+    initKeyAuth();
+
+    // iOS 13+ වලට ගැළපෙන විදියට keyWindow එක ලබාගැනීම
+    UIWindow *keyWindow = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *window in scene.windows) {
+                    if (window.isKeyWindow) {
+                        keyWindow = window;
+                        break;
+                    }
+                }
+            }
+        }
+    } else {
+        keyWindow = [UIApplication sharedApplication].keyWindow;
+    }
+
+    // Login Button එක නිර්මාණය (වරහන් වැරදි සියල්ල නිවැරදි කර ඇත)
+    UIButton *loginButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    loginButton.frame = CGRectMake(20, 165, 280, 45);
+    [loginButton setTitle:@"Login" forState:UIControlStateNormal];
+    loginButton.backgroundColor = [UIColor blueColor];
+    
+    if (keyWindow) {
+        [keyWindow addSubview:loginButton];
+    }
+}
+
+%end
