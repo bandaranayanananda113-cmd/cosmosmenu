@@ -16,9 +16,10 @@ jobs:
       - name: Setup Theos Framework
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
-          curl -LO https://github.com/theos/sdks/raw/master/iPhoneOS14.5.sdk.tar.xz
           mkdir -p $HOME/theos/sdks
+          curl -LO https://github.com/theos/sdks/raw/master/iPhoneOS14.5.sdk.tar.xz || curl -LO https://github.com/xybp888/iOS-SDKs/raw/master/iPhoneOS14.5.sdk.tar.xz
           tar -xf iPhoneOS14.5.sdk.tar.xz -C $HOME/theos/sdks
+          rm iPhoneOS14.5.sdk.tar.xz
         env:
           THEOS: ${{ github.workspace }}/theos
 
