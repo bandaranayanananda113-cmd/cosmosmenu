@@ -25,8 +25,9 @@ jobs:
       - name: Compile Dylib
         run: |
           export THEOS=$HOME/theos
-          # package වෙනුවට කෙලින්ම dylib එක විතරක් compile කිරීමට නියෝග කිරීම
-          make FINALPACKAGE=1
+          # වත්මන් ෆෝල්ඩරයේ තියෙන ෆයිල් මොනවාදැයි බලා නිවැරදිවම ලැයිස්තුගත කර Compile කිරීම
+          ls -la
+          make -f Makefile FINALPACKAGE=1
         
       - name: Upload Finished Dylib
         uses: actions/upload-artifact@v4
