@@ -26,18 +26,18 @@ jobs:
         run: |
           export THEOS=$HOME/theos
 
-          # 1. Makefile එක නිවැරදිව සෑදීම
+          # 1. Makefile එක නිවැරදිව (main.xm) භාවිතයෙන් සෑදීම
           cat << 'EOF' > Makefile
           TARGET := iphone:clang:latest:14.5
           ARCHS = arm64 arm64e
           include $(THEOS)/makefiles/common.mk
           TWEAK_NAME = CosmosMenu
-          CosmosMenu_FILES = main.mm
+          CosmosMenu_FILES = main.xm
           CosmosMenu_CFLAGS = -fobjc-arc -std=c++17
           include $(THEOS)/makefiles/tweak.mk
           EOF
 
-          # 2. skStr.h එක සර්වර් එක ඇතුළේ අලුතින්ම නිවැරදිව සෑදීම
+          # 2. skStr.h එක නිවැරදිව සෑදීම
           cat << 'EOF' > skStr.h
           #pragma once
           #include <string>
@@ -68,8 +68,8 @@ jobs:
           }()
           EOF
 
-          # 3. main.mm එක කිසිම Error එකක් නැතිව ක්ලීන් කර සෑදීම
-          cat << 'EOF' > main.mm
+          # 3. main.xm ලෙස Logos සින්ටැක්ස් සහිතව නිවැරදිව සෑදීම
+          cat << 'EOF' > main.xm
           #import <UIKit/UIKit.h>
           #import "skStr.h"
 
