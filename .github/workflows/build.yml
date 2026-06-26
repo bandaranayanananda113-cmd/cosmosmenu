@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           make package FINALPACKAGE=1
         
       - name: Upload Finished Dylib
-        uses: actions/actions-uploader@v2
+        uses: actions/upload-artifact@v4
         with:
           name: CosmosKeyAuth-Dylib
           path: .theos/obj/debug/*.dylib
