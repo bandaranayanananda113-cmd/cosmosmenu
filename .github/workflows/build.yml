@@ -1,0 +1,34 @@
+name: Build Tweak
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Theos Dependencies
+        run: brew install ldid xz
+
+      - name: Setup Theos Framework
+        run: |
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
+          curl -LO https://github.com/theos/sdks/raw/master/iPhoneOS14.5.sdk.tar.xz
+          mkdir -p $HOME/theos/sdks
+          tar -xf iPhoneOS14.5.sdk.tar.xz -C $HOME/theos/sdks
+        env:
+          THEOS: ${{ github.workspace }}/theos
+
+      - name: Compile Dylib
+        run: |
+          export THEOS=$HOME/theos
+          make package FINALPACKAGE=1
+        
+      - name: Upload Finished Dylib
+        uses: actions/actions-uploader@v2
+        with:
+          name: CosmosKeyAuth-Dylib
+          path: .theos/obj/debug/*.dylib
