@@ -17,7 +17,6 @@ jobs:
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
           mkdir -p $HOME/theos/sdks
-          # නිල GitHub Repository එකෙන් කෙලින්ම iOS 14.5 SDK එක බාගැනීම
           git clone --depth=1 https://github.com/theos/sdks.git $HOME/theos-sdks
           mv $HOME/theos-sdks/iPhoneOS14.5.sdk $HOME/theos/sdks/
         env:
@@ -26,7 +25,8 @@ jobs:
       - name: Compile Dylib
         run: |
           export THEOS=$HOME/theos
-          make package FINALPACKAGE=1
+          # package වෙනුවට කෙලින්ම dylib එක විතරක් compile කිරීමට නියෝග කිරීම
+          make FINALPACKAGE=1
         
       - name: Upload Finished Dylib
         uses: actions/upload-artifact@v4
